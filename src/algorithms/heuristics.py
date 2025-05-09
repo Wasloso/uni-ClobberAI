@@ -46,7 +46,7 @@ class IsolationHeuristic(Heuristic):
     def _calculate_score(self, board: Board, color: Color) -> int:
         cells = board.get_cells_with_color(color)
         total = len(cells)
-        isolated = sum(1 for y, x in cells if board.is_isolated(x, y))
+        isolated = sum(1 for x, y in cells if board.is_isolated(x, y))
         return total - isolated
 
 
