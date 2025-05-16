@@ -1,4 +1,5 @@
 import pytest
+from algorithms.heuristics import ControlHeuristic
 
 from src.enums.color import Color
 from src.algorithms import IsolationHeuristic
@@ -29,3 +30,13 @@ def test_isolation_one_isolated():
     board.print_board()
     value_player = heuristic.evaluate(board, player_color)
     assert value_player == 1
+
+
+def test_center_control():
+    board: Board = Board(5, 5)
+    heuristic: ControlHeuristic = ControlHeuristic()
+    player_color: Color = Color.WHITE
+    enemy_color: Color = Color.BLACK
+    value_player = heuristic.evaluate(board, player_color)
+    value_enemy = heuristic.evaluate(board, enemy_color)
+    assert value_player == value_enemy

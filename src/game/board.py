@@ -15,11 +15,18 @@ class Board:
         self._m = m
         self._board = self._create_board(n, m)
 
+    def reset(self) -> None:
+        self._board = self._create_board(self._n, self._m)
+
+    @property
+    def center(self) -> Tuple[int, int]:
+        return ((self._n - 1) / 2, (self._m - 1) / 2)
+
     def _create_board(self, n: int, m: int) -> List[List[int]]:
         board = []
-        for y in range(n):  # rows
+        for y in range(n):
             row = []
-            for x in range(m):  # columns
+            for x in range(m):
                 state = CellState.WHITE if (x + y) % 2 == 0 else CellState.BLACK
                 row.append(state.value)
             board.append(row)
@@ -79,13 +86,6 @@ class Board:
                     cells.append((x, y))
         return cells
 
-    def to_dict(self) -> Dict[Tuple[int, int], CellState]:
-        return {
-            (x, y): CellState(self._board[y][x])
-            for y in range(self._n)
-            for x in range(self._m)
-        }
-
     def get_all_cells(self) -> List[Tuple[int, int]]:
         return [(x, y) for y in range(self._n) for x in range(self._m)]
 
@@ -95,18 +95,7 @@ class Board:
     def calculate_state(self) -> Tuple[int, int, str]:
         white_points = sum(row.count(Color.WHITE.value) for row in self._board)
         black_points = sum(row.count(Color.BLACK.value) for row in self._board)
-
-        winner = (
-            Color.WHITE
-            if white_points > black_points
-            else Color.BLACK if black_points > white_points else "Draw"
-        )
-        return winner, white_points, black_points
-
-    def evaluate_for_color(self, color: Color) -> int:
-        color_count = sum(row.count(color.value) for row in self._board)
-        enemy_count = sum(row.count(-color.value) for row in self._board)
-        return color_count - enemy_count
+        return white_points, black_points
 
     def calculate_possible_moves(self, color: Color) -> List[Move]:
         enemy_color = -color

@@ -5,7 +5,8 @@ from typing import Tuple
 from src.enums.color import Color
 from src.game.board import Board
 from src.game.move import Move
-from .heuristics import CountHeuristic, Heuristic
+from src.utils.decorators import timeit
+from .heuristics import Heuristic
 
 
 class Minmax(ABC):
@@ -25,6 +26,7 @@ class Minmax(ABC):
         depth: int,
         maximizing: bool,
         color: Color,
+        self_color: Color,
         alpha: float = float("-inf"),
         beta: float = float("inf"),
         use_pruning: bool = False,
@@ -33,21 +35,16 @@ class Minmax(ABC):
         board_hash = (board.get_hash(), color.value, maximizing)
 
         if board_hash in self.transposition_table:
-
             return self.transposition_table[board_hash]
 
         if depth == 0:
-            value = heuristic.evaluate(board, color)
+            value = heuristic.evaluate(board, self_color)
             self.transposition_table[board_hash] = (value, None)
             return value, None
-
         moves = board.calculate_possible_moves(color)
-        # Add randomization so the AI doesn't always play the same moves
-        random.shuffle(moves)
         if not moves:
-            value = heuristic.evaluate(board, color)
-            self.transposition_table[board_hash] = (value, None)
-            return value, None
+            return float("-inf") if maximizing else float("+inf"), None
+
         best_move: Move = None
         best_eval = float("-inf") if maximizing else float("inf")
 
@@ -59,6 +56,7 @@ class Minmax(ABC):
                 depth - 1,
                 not maximizing,
                 -color,
+                self_color,
                 alpha,
                 beta,
                 use_pruning,
@@ -68,8 +66,8 @@ class Minmax(ABC):
             board.undo_move(move, captured)
             move.score = eval_score
 
-            if (maximizing and eval_score > best_eval) or (
-                not maximizing and eval_score < best_eval
+            if (maximizing and eval_score >= best_eval) or (
+                not maximizing and eval_score <= best_eval
             ):
                 best_eval = eval_score
                 best_move = move
@@ -81,6 +79,7 @@ class Minmax(ABC):
                     beta = min(beta, eval_score)
                 if beta <= alpha:
                     break
+
         self.transposition_table[board_hash] = (best_eval, best_move)
         return best_eval, best_move
 
@@ -89,10 +88,11 @@ class BaseMinmax(Minmax):
     def execute(
         self, board: Board, color: Color, heuristic: Heuristic | None = None
     ) -> Move | None:
-        heuristic = heuristic or CountHeuristic()
+        heuristic = heuristic
         self.transposition_table.clear()
-        heuristic.clear_cache()
-        _, move = self._minmax(board, self.depth, True, color, heuristic=heuristic)
+        _, move = self._minmax(
+            board, self.depth, True, color, color, heuristic=heuristic
+        )
         return move
 
 
@@ -100,10 +100,9 @@ class AlphaBetaMinmax(Minmax):
     def execute(
         self, board: Board, color: Color, heuristic: Heuristic | None = None
     ) -> Move | None:
-        heuristic = heuristic or CountHeuristic()
+        heuristic = heuristic
         self.transposition_table.clear()
-        heuristic.clear_cache()
         _, move = self._minmax(
-            board, self.depth, True, color, use_pruning=True, heuristic=heuristic
+            board, self.depth, True, color, color, use_pruning=True, heuristic=heuristic
         )
         return move

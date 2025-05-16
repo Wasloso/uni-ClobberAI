@@ -10,4 +10,4 @@ class GameResult:
     black_points: int
 
     def __str__(self):
-        return f"Winner: {self.winner}, White Points: {self.white_points}, Black Points: {self.black_points}"
+        return f"Winner: {self.winner}, White pieces left: {self.white_points}, Black pieces left: {self.black_points}"
